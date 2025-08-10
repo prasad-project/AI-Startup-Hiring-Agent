@@ -1,0 +1,594 @@
+{
+  "name": "Start-Up Help",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Venush Start-Up Hiring",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Experience Total Year"
+            },
+            {
+              "fieldLabel": "Profession",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Graphic Design"
+                  },
+                  {
+                    "option": "Data Science"
+                  },
+                  {
+                    "option": "Machine Learning"
+                  },
+                  {
+                    "option": "Web Development"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "Upload Your Resume",
+              "fieldType": "file",
+              "acceptFileTypes": "pdf",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -640,
+        272
+      ],
+      "id": "3d84e5bf-bed5-40db-bd80-3b01f2202ce6",
+      "name": "On form submission",
+      "webhookId": "REPLACE_WITH_YOUR_WEBHOOK_ID"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"Experience Total Year\": \"{{$json[\"Experience Total Year\"]}}\",\n  \"Profession\": \"{{$json[\"Profession\"]}}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -384,
+        256
+      ],
+      "id": "8b5f62ed-bc17-47ad-88e7-e2f02486159c",
+      "name": "Filter for Airtable"
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "Upload_Your_Resume",
+        "name": "={{ $json['Upload Your Resume'][0].filename }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_YOUR_FOLDER_ID",
+          "mode": "list",
+          "cachedResultName": "resume upload"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -384,
+        464
+      ],
+      "id": "929c5d09-df3f-486e-bbd0-e4bfd9844725",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_GOOGLE_DRIVE_CREDENTIAL_ID",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_YOUR_PDF_FILE_ID",
+          "mode": "list",
+          "cachedResultName": "SAMPLE_RESUME.pdf"
+        },
+        "options": {
+          "binaryPropertyName": "pdfData"
+        }
+      },
+      "id": "02dfc184-59c8-4362-8b52-fbffddf47c35",
+      "name": "Download PDF File",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -176,
+        576
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_GOOGLE_DRIVE_CREDENTIAL_ID",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "pdfData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        144
+      ],
+      "id": "f1b61fad-b294-4a54-8733-a55179f2d25f",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Using the input text provided in {{ $json.text }}, extract the person's name, email, project details, and skills.  \nReturn the response as JSON using the exact schema below:\n\n{\n  \"schema\": [\n    {\n      \"field\": \"Name\",\n      \"value\": \"<Extracted Full Name>\"\n    },\n    {\n      \"field\": \"Email\",\n      \"value\": \"<Extracted Email Address>\"\n    },\n    {\n      \"field\": \"Project\",\n      \"value\": \"<Extracted Project Description>\"\n    },\n    {\n      \"field\": \"Skills\",\n      \"value\": \"<Extracted Skills List or Description>\"\n    }\n  ]\n}\n\nDo not include any additional text outside the JSON.\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        176,
+        384
+      ],
+      "id": "c6c02e5c-6c24-4e89-9183-a3e2ae2da279",
+      "name": "AI Agent - Resume Parser"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-pro",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        176,
+        576
+      ],
+      "id": "9a06c3e6-cda1-4520-b54c-70e331233718",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "REPLACE_WITH_YOUR_GEMINI_API_CREDENTIAL_ID",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "REPLACE_WITH_YOUR_AIRTABLE_BASE_ID",
+          "mode": "list",
+          "cachedResultName": "n8n"
+        },
+        "table": {
+          "__rl": true,
+          "value": "REPLACE_WITH_YOUR_AIRTABLE_TABLE_ID",
+          "mode": "list",
+          "cachedResultName": "Table 4"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $json.name }}",
+            "Email": "={{ $json.email }}",
+            "Project": "={{ $json.project }}",
+            "Profession": "={{ $('On form submission').item.json.Profession }}",
+            "Experience Total Year": "={{ $('On form submission').item.json['Experience Total Year'] }}",
+            "Rating": "={{ \n  ($('On form submission').item.json.Profession || '').trim() === \"Graphic Design\" ? 2 :\n  ($('On form submission').item.json.Profession || '').trim() === \"Data Science\" ? 4 :\n  ($('On form submission').item.json.Profession || '').trim() === \"Machine Learning\" ? 4 :\n  ($('On form submission').item.json.Profession || '').trim() === \"Web Development\" ? 3 :\n  null\n}}\n",
+            "Skills": "={{ $json.skills }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Experience Total Year",
+              "displayName": "Experience Total Year",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Skills",
+              "displayName": "Skills",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Project",
+              "displayName": "Project",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Profession",
+              "displayName": "Profession",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Graphic Design",
+                  "value": "Graphic Design"
+                },
+                {
+                  "name": "Data Science",
+                  "value": "Data Science"
+                },
+                {
+                  "name": "Machine Learning",
+                  "value": "Machine Learning"
+                },
+                {
+                  "name": "Web Development",
+                  "value": "Web Development"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Rating",
+              "displayName": "Rating",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Summary for Role",
+              "displayName": "Summary for Role",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Source",
+              "displayName": "Source",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        576,
+        304
+      ],
+      "id": "1a0c37ce-349f-4976-b4bf-94f51c3c0576",
+      "name": "Create a record",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "REPLACE_WITH_YOUR_AIRTABLE_CREDENTIAL_ID",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the raw string output from the previous node.\nconst rawOutput = $input.item.json.output;\n\nlet name = null;\nlet email = null;\nlet project = null;\nlet skills = null;\n\ntry {\n  // Remove the markdown code block fences (```json\\n...\\n```)\n  const jsonString = rawOutput.replace(/```json\\n?|```/g, '').trim();\n  \n  // Parse the clean string into a JavaScript object\n  const parsedJson = JSON.parse(jsonString);\n  \n  // Check if the schema array exists\n  if (parsedJson && Array.isArray(parsedJson.schema)) {\n    // Iterate through the schema array to find the desired fields\n    parsedJson.schema.forEach(item => {\n      if (item.field === 'Name') {\n        name = item.value;\n      } else if (item.field === 'Email') {\n        email = item.value;\n      } else if (item.field === 'Project') {\n        project = item.value;\n      } else if (item.field === 'Skills') {\n        skills = item.value;\n      }\n    });\n  }\n} catch (error) {\n  // Handle any parsing errors here\n  console.error('Failed to parse JSON:', error.message);\n}\n\n// Return the extracted data in a new JSON object\nreturn {\n  json: {\n    name: name,\n    email: email,\n    project: project,\n    skills: skills\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        608
+      ],
+      "id": "21d3febb-6d36-45dd-836e-d31f5db1ed98",
+      "name": "Parse AI Response"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Act as an expert startup hiring manager.\n\nUsing the candidate details below, generate a confident 2-line summary explaining why this candidate is an ideal fit for our fast-growing startup.\n\nThe summary must:\n\nClearly state the candidate's profession and years of experience\n\nHighlight relevant skills and project experience that align with our startup's goals\n\nExplain how their expertise will drive innovation, agility, and growth within our dynamic environment\n\nUse future-focused, impactful language emphasizing their readiness to contribute immediately\n\nBe exactly 2 lines long\n\nCandidate details:\n\nName: {{ $json.fields.Name }}\n\nExperience Total Year: {{ $json.fields['Experience Total Year'] }}\n\nProfession: {{ $json.fields.Profession }}\n\nSkills: {{ $json.fields.Skills }}\n\nProject: {{ $json.fields.Project }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        496
+      ],
+      "id": "2bb4a12d-9398-4f0a-bb90-94fac1b1641f",
+      "name": "AI Agent - Summary Generator"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-pro",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        672,
+        672
+      ],
+      "id": "d98cbc3e-902f-4b1d-9668-10508b7df45a",
+      "name": "Google Gemini Chat Model (Summary)",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "REPLACE_WITH_YOUR_GEMINI_API_CREDENTIAL_ID",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "REPLACE_WITH_YOUR_AIRTABLE_BASE_ID",
+          "mode": "list",
+          "cachedResultName": "n8n"
+        },
+        "table": {
+          "__rl": true,
+          "value": "REPLACE_WITH_YOUR_AIRTABLE_TABLE_ID",
+          "mode": "list",
+          "cachedResultName": "Table 4"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Create a record').item.json.id }}",
+            "Summary for Role": "={{ $json.output }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true
+            },
+            {
+              "id": "Summary for Role",
+              "displayName": "Summary for Role",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        896,
+        240
+      ],
+      "id": "d68037aa-f07d-4807-85c9-daa0c73b3f24",
+      "name": "Update record with Summary",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "REPLACE_WITH_YOUR_AIRTABLE_CREDENTIAL_ID",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Filter for Airtable",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter for Airtable": {
+      "main": [
+        []
+      ]
+    },
+    "Download PDF File": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "AI Agent - Resume Parser",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent - Resume Parser": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent - Resume Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Response": {
+      "main": [
+        [
+          {
+            "node": "Create a record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file": {
+      "main": [
+        [
+          {
+            "node": "Download PDF File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model (Summary)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent - Summary Generator",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a record": {
+      "main": [
+        [
+          {
+            "node": "AI Agent - Summary Generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent - Summary Generator": {
+      "main": [
+        [
+          {
+            "node": "Update record with Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "REPLACE_WITH_YOUR_VERSION_ID",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "REPLACE_WITH_YOUR_INSTANCE_ID"
+  },
+  "id": "REPLACE_WITH_YOUR_WORKFLOW_ID",
+  "tags": []
+}
