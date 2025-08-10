@@ -367,9 +367,7 @@ We welcome contributions to improve this workflow! Here's how you can help:
 
 ### Get Help
 
-- **📧 Email**: support@your-domain.com
-- **💬 Discord**: [Join our community](https://discord.gg/your-server)
-- **📖 Documentation**: [Full documentation](https://docs.your-domain.com)
+- **📧 Email**: prasadpalei360@gmail.com
 - **🐛 Bug Reports**: [GitHub Issues](https://github.com/your-username/startup-hiring-ai/issues)
 
 ### FAQ
